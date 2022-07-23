@@ -1,4 +1,4 @@
-local Client = require('network/client')
+local Client = require('client')
 local socket = require('socket')
 
 local function listen(self, port)
