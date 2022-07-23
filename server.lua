@@ -7,6 +7,7 @@ local function listen(self, port)
     return false
   end
   self.__server:settimeout(0)
+  self.__open = true
   if self.onServerListening then
     self:onServerListening(port)
   end
@@ -17,11 +18,12 @@ local function accept(self)
   local client, err = self.__server:accept()
   if client then
     local connect = true
+    local client = Client.new(client)
     if self.onClientConnect then
       connect = self:onClientConnect(client)
     end
     if connect then
-      table.insert(self.__clients, Client.new(client))
+      table.insert(self.__clients, client)
     end
     return connect
   elseif err ~= 'timeout' then
@@ -68,7 +70,17 @@ local function kick(self, client)
   return false
 end
 
+local function close(self)
+  if self.__open then
+    self.__open = false
+    self.__server:close()
+  end
+end
+
 local function run(self)
+  if not self.__open then
+    return false, 'Server not listening'
+  end
   local success, err = self:accept()
   while success do
     success, err = self:accept()
@@ -77,11 +89,14 @@ local function run(self)
     return false, err
   end
   self:poll()
+  return true
 end
 
 local function new()
   return {
     __clients = {},
+    __open = false,
+    close = close,
     listen = listen,
     accept = accept,
     kick = kick,
