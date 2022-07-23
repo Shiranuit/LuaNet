@@ -23,12 +23,9 @@ end
 local function receive(self)
   local data, err, part = self.__socket:receive(4096)
   local finalData = data or part
-  if finalData then
+  if finalData and #finalData > 0 then
     self.__bufferSize = self.__bufferSize + #finalData
     table.insert(self.__buffer, finalData)
-  elseif err ~= 'timeout' then
-    self.__open = false
-    return false, err
   end
 
   if self.__bufferSize > 4 then
@@ -47,6 +44,12 @@ local function receive(self)
       return true, data
     end
   end
+
+  if err ~= 'timeout' then
+    self.__open = false
+    return false, err
+  end
+  
   return false, nil
 end
 
