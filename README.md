@@ -1,2 +1,2 @@
 # LuaNet
-TCP Server &amp; Client on top of LuaSocket
+TCP Server &amp; Client built on top of LuaSocket
