@@ -23,9 +23,12 @@ end
 local function receive(self)
   local data, err, part = self.__socket:receive(4096)
   local finalData = data or part
-  if finalData and #finalData > 0 then
+  if finalData then
     self.__bufferSize = self.__bufferSize + #finalData
     table.insert(self.__buffer, finalData)
+  elseif err ~= 'timeout' then
+    self.__open = false
+    return false, err
   end
 
   if self.__bufferSize > 4 then
@@ -44,12 +47,6 @@ local function receive(self)
       return true, data
     end
   end
-
-  if err ~= 'timeout' then
-    self.__open = false
-    return false, err
-  end
-  
   return false, nil
 end
 
@@ -71,6 +68,9 @@ local function send(self, data)
       local len, err = self.__socket:send(fullData:sub(lenSent+1, math.min(lenSent+1+4096, #fullData)))
       lenSent = lenSent + len
       if err then
+        if err == 'close' then
+          self.__open = false
+        end
         return 0, err
       end
     end
